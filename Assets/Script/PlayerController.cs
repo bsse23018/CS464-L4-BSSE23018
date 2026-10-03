@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     Rigidbody rb;
     CapsuleCollider col;
     Vector3 moveInput;
+    Collider[] groundHits = new Collider[4];
     bool isGrounded;
     bool jumpQueued;
 
@@ -33,9 +34,18 @@ public class PlayerController : MonoBehaviour
         float v = Input.GetAxisRaw("Vertical");
         moveInput = new Vector3(h, 0f, v).normalized;
 
-        // 2. Perform a reliable ground check
+        // 2. Perform a reliable ground check (excluding own collider)
         Vector3 bottom = transform.position + col.center - Vector3.up * (col.height * 0.5f - col.radius);
-        isGrounded = Physics.CheckSphere(bottom, col.radius + groundCheckDistance, groundLayer, QueryTriggerInteraction.Ignore);
+        int hitCount = Physics.OverlapSphereNonAlloc(bottom, col.radius + groundCheckDistance, groundHits, groundLayer, QueryTriggerInteraction.Ignore);
+        isGrounded = false;
+        for (int i = 0; i < hitCount; i++)
+        {
+            if (groundHits[i] != col)
+            {
+                isGrounded = true;
+                break;
+            }
+        }
 
         // 3. Queue jump if grounded
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
